@@ -14,4 +14,4 @@ _در خط 9 توکن بات خود را قرار دهید_
 
 **Powered by SEEDTEAM**
 
-**Editor @Mamad_over : Mamad_Over :| that's mean @K_a_I_i_I_i_n_u_x : Mamaddatak **
+**Editor @Mamad_over : Mamad_Over :| that's mean @K_a_I_i_I_i_n_u_x : Mamaddatak**

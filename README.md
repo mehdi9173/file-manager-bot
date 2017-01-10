@@ -4,7 +4,7 @@
 
 **برای نصب از دستور زیر استفاده کنید**
 
-``sudo apt-get install lua5.1 && git clone https://github.com/Datak4G/file-manager-bot.git && cd file-manager-bot && chmod 777 launch.sh && ./run.sh install && ./run.sh``
+``sudo apt-get install lua5.1 && git clone https://github.com/Datak4G/file-manager-bot.git && cd file-manager-bot && chmod 777 run.sh && ./run.sh install && ./run.sh``
 
 _در خط 8 آیدی خودتان را قرار دهید_
 

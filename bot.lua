@@ -5,10 +5,10 @@ URL = require('socket.url')
 JSON = require('dkjson')
 HTTPS = require('ssl.https')
 clr = require 'term.colors'
-sudo_users = {0} --------------Youre id
-local bot_api_key = "" -----------Youre bot token
+sudo_users = {} --------------Youre id
+local bot_api_key = "" --------------Youre bot token
 local BASE_URL = "https://api.telegram.org/bot"..bot_api_key
-local BASE_FOLDER = ""
+local BASE_FOLDER = ".."
 function is_sudo(msg)
   local var = false
   for k,v in pairs(sudo_users) do
@@ -18,18 +18,60 @@ function is_sudo(msg)
   end
   return var
 end
-function sendRequest(url)
-  local dat, res = HTTPS.request(url)
-  local tab = JSON.decode(dat)
+function vardump(value, depth, key)
+  local linePrefix = ''
+  local spaces = ''
 
-  if res ~= 200 then
-    return false, res
+  if key ~= nil then
+    linePrefix = key .. ' = '
   end
-  if not tab.ok then
-    return false, tab.description
+
+  if depth == nil then
+    depth = 0
+  else
+    depth = depth + 1
+    for i=1, depth do 
+      spaces = spaces .. '  '
+    end
   end
-  return tab
+
+  if type(value) == 'table' then
+    mTable = getmetatable(value)
+    if mTable == nil then
+      print(spaces .. linePrefix .. '[ ')
+    else
+      print(spaces .. '] ')
+        value = mTable
+    end
+    for tableKey, tableValue in pairs(value) do
+      vardump(tableValue, depth, tableKey)
+    end
+  elseif type(value)  == 'function' or 
+    type(value) == 'thread' or 
+    type(value) == 'userdata' or 
+    value == nil then
+      print(spaces .. tostring(value))
+  elseif type(value)  == 'string' then
+    print(spaces .. linePrefix .. '"' .. tostring(value) .. '",')
+  else
+    print(spaces .. linePrefix .. tostring(value) .. ',')
+  end
 end
+
+function sendRequest(url) 
+local dat,code = HTTPS.request(url)
+if not dat then 
+sendMessage(185532812, 'Error.url : \n'..url..'\n\nCode : '..code)---------- 185532812 پاک کنید و آیدی خود را در جای آن قرار دهید 
+return false, code  
+end 
+local tab = JSON.decode(dat)  
+if not tab.ok then 
+vardump(tab)
+sendMessage(185532812, 'Error.url : \n'..url..'')---------- 185532812 پاک کنید و آیدی خود را در جای آن قرار دهید 
+return false
+end 
+return tab 
+end 
 function getMe()
     local url = BASE_URL .. '/getMe'
   return sendRequest(url)
@@ -41,11 +83,14 @@ function getUpdates(offset)
   end
   return sendRequest(url)
 end
-function sendMessage(chat_id, text, disable_web_page_preview, reply_to_message_id, use_markdown)
+function sendMessage(chat_id, text, disable_web_page_preview, reply_to_message_id, use_markdown,key)
 	local url = BASE_URL .. '/sendMessage?chat_id=' .. chat_id .. '&text=' .. URL.escape(text)
 	if disable_web_page_preview == true then
 		url = url .. '&disable_web_page_preview=true'
 	end
+	if key then 
+url = url..'&reply_markup='..JSON.encode(key) 
+end
 	if reply_to_message_id then
 		url = url .. '&reply_to_message_id=' .. reply_to_message_id
 	end
@@ -54,6 +99,25 @@ function sendMessage(chat_id, text, disable_web_page_preview, reply_to_message_i
 	end
 	return sendRequest(url)
 end
+local function editMessageText(mode, message_id, chat_id, text, keyboard, markdown) 
+if mode == 'inline' then 
+ url = BASE_URL .. '/editMessagetext?inline_message_id='..message_id..'&text=' ..  URL.escape(text)
+else 
+ url = BASE_URL .. '/editMessagetext?chat_id='..chat_id..'&message_id='..message_id..'&text=' ..  URL.escape(text)
+end 
+if markdown then 
+url = url .. '&parse_mode=Markdown' 
+end 
+
+url = url .. '&disable_web_page_preview=true' 
+ 
+if keyboard then 
+url = url..'&reply_markup='..JSON.encode(keyboard) 
+end 
+print(url) 
+local res, code = sendRequest(url) 
+return res, code  
+end  
 function sendDocument(chat_id, document, reply_to_message_id)
 	local url = BASE_URL .. '/sendDocument'
 	local curl_command = 'cd \''..BASE_FOLDER..currect_folder..'\' && curl -s "' .. url .. '" -F "chat_id=' .. chat_id .. '" -F "document=@' .. document .. '"'
@@ -87,29 +151,35 @@ function download_to_file(url, file_name, file_path)
 end
 function bot_run()
   bot = nil
-  while not bot do 
+  if not bot then
     bot = getMe()
   end
-  for k,v in pairs(sudo_users) do
   bot = bot.result
-  local bot_info = "Username : @"..bot.username.."\nName : "..bot.first_name.."\nId : "..bot.id.."\nSudo user : "..v.."\nRun : "..os.date("%F - %H:%M:%S")
+  local bot_info = "Username : @"..bot.username.."\nName : "..bot.first_name.."\nId : "..bot.id.."\nRun : "..os.date("%F - %H:%M:%S")
   print(bot_info)
+  for k,v in pairs(sudo_users) do
 sendMessage(v, bot_info, true, 0, true)
-  print(clr.green.."██████████████    ██████████████  ██████████████████    ██████          ██████  ██████████████  ████████  ████████")
-print(clr.green.."██          ██    ██          ██  ██              ██    ██  ██████████  ██  ██  ██          ██  ██    ██  ██    ██")
-print(clr.green.."██  ██████  ██    ██  ██████  ██  ████████  ████████    ██          ██  ██  ██  ██  ██████████  ████  ██  ██  ████")
-print(clr.green.."██  ██  ██  ██    ██  ██  ██  ██        ██  ██          ██  ██████  ██  ██  ██  ██  ██            ██    ██    ██  ") 
-print(clr.white.."██  ██████  ████  ██  ██  ██  ██        ██  ██          ██  ██  ██  ██  ██  ██  ██  ██████████    ████      ████  ")
-print(clr.white.."██            ██  ██  ██  ██  ██        ██  ██          ██  ██  ██  ██  ██  ██  ██          ██      ██      ██    ") 
-print(clr.white.."██  ████████  ██  ██  ██  ██  ██        ██  ██          ██  ██  ██  ██  ██  ██  ██  ██████████    ████      ████  ") 
-print(clr.white.."██  ██    ██  ██  ██  ██  ██  ██        ██  ██          ██  ██  ██  ██████  ██  ██  ██            ██    ██    ██  ") 
-print(clr.red.."██  ████████  ██  ██  ██████  ██        ██  ██          ██  ██  ██          ██  ██  ██████████  ████  ██  ██  ████") 
-print(clr.red.."██            ██  ██          ██        ██  ██          ██  ██  ██████████  ██  ██          ██  ██    ██  ██    ██") 
-print(clr.red.."████████████████  ██████████████        ██████          ██████          ██████  ██████████████  ████████  ████████") 
+end
+ print(clr.green.."██████████████    ██████████████  ██████████████████    ██████          ██████  ██████████████  ████████  ████████")
+ print(clr.green.."██          ██    ██          ██  ██              ██    ██  ██████████  ██  ██  ██          ██  ██    ██  ██    ██")
+ print(clr.green.."██  ██████  ██    ██  ██████  ██  ████████  ████████    ██          ██  ██  ██  ██  ██████████  ████  ██  ██  ████")
+ print(clr.green.."██  ██  ██  ██    ██  ██  ██  ██        ██  ██          ██  ██████  ██  ██  ██  ██  ██            ██    ██    ██  ") 
+ print(clr.white.."██  ██████  ████  ██  ██  ██  ██        ██  ██          ██  ██  ██  ██  ██  ██  ██  ██████████    ████      ████  ")
+ print(clr.white.."██            ██  ██  ██  ██  ██        ██  ██          ██  ██  ██  ██  ██  ██  ██          ██      ██      ██    ") 
+ print(clr.white.."██  ████████  ██  ██  ██  ██  ██        ██  ██          ██  ██  ██  ██  ██  ██  ██  ██████████    ████      ████  ") 
+ print(clr.white.."██  ██    ██  ██  ██  ██  ██  ██        ██  ██          ██  ██  ██  ██████  ██  ██  ██            ██    ██    ██  ") 
+ print(clr.red.."██  ████████  ██  ██  ██████  ██        ██  ██          ██  ██  ██          ██  ██  ██████████  ████  ██  ██  ████") 
+ print(clr.red.."██            ██  ██          ██        ██  ██          ██  ██  ██████████  ██  ██          ██  ██    ██  ██    ██") 
+ print(clr.red.."████████████████  ██████████████        ██████          ██████          ██████  ██████████████  ████████  ████████") 
   last_update = last_update or 0
   is_running = true
-  currect_folder = ""
+  currect_folder = " "
 end
+function string:split(sep)
+  local sep, fields = sep or ":", {}
+  local pattern = string.format("([^%s]+)", sep)
+self:gsub(pattern, function(c) fields[#fields+1] = c end)
+return fields
 end
 function msg_processor(msg)
 	if msg == nil then return end
@@ -118,155 +188,211 @@ function msg_processor(msg)
 		return
 	end
 	if msg.text then
-		if msg.text:match("^[!/]ls$") then
-		local matches = { string.match(msg.text, "^[!/]ls$") }
+		if msg.text:match("^ls$") or msg.text:match("^/ls$") then
+		local matches = { string.match(msg.text, "^ls$") }
 			local action = io.popen('ls "'..BASE_FOLDER..currect_folder..'"'):read("*all")
-      sendMessage(msg.chat.id, action)
+			local tabs = action:split('\n')
+			local key = {}
+			key.inline_keyboard = {}
+			for i = 1,#tabs do
+			 button = {{text = i..'-'..tabs[i],callback_data = 'cd '..tabs[i]}}
+             table.insert(key.inline_keyboard, button)
+			end
+			sendMessage(msg.chat.id, action, true, false, true,key)
     end
-	if msg.text:match("^[!/]git pull$") then
-		local matches = { string.match(msg.text, "^[!/]git pull$") }
+	if msg.text:match("^cd$") or msg.text:match("^/cd$") then
+		local matches = { string.match(msg.text, "^cd$") }
+			local action = io.popen('ls -p "'..BASE_FOLDER..currect_folder..'"'):read("*all")
+			local tabs = action:split('\n')
+			local key = {}
+			key.inline_keyboard = {}
+			for i = 1,#tabs do
+			if tabs[i]:match('/$') then
+			 button = {{text = i..'-'..tabs[i],callback_data = 'cd '..tabs[i]:gsub('/','')}}
+             table.insert(key.inline_keyboard, button)
+			end
+			end
+			sendMessage(msg.chat.id, '*PLeas Select your dir to go thir*', true, false, true,key)
+    end
+	if msg.text:match("^dlt$") or msg.text:match("^/dlt$") then
+		local matches = { string.match(msg.text, "^dlt$") }
+			local action = io.popen('ls -p "'..BASE_FOLDER..currect_folder..'"'):read("*all")
+			local tabs = action:split('\n')
+			local key = {}
+			key.inline_keyboard = {}
+			for i = 1,#tabs do
+			if not tabs[i]:match('/$') then
+			 button = {{text = i..'-'..tabs[i],callback_data = 'rm '..tabs[i]}}
+             table.insert(key.inline_keyboard, button)
+			end
+			end
+			sendMessage(msg.chat.id, '*PLeas Select your file to remove it*', true, false, true,key)
+    end
+	if msg.text:match("^git pull$") or msg.text:match("^/git pull$") then
+		local matches = { string.match(msg.text, "^git pull$") }
 			local action = io.popen("git pull "):read('*all')
       sendMessage(msg.chat.id, action)
     end
-	if msg.text:match("^[!/]reboot$") then
-		local matches = { string.match(msg.text, "^[!/]reboot$") }
+	if msg.text:match("^reboot$") or msg.text:match("^/reboot$") then
+		local matches = { string.match(msg.text, "^reboot$") }
 			local action = io.popen("sh ./upstart.sh"):read('*a')			
       sendMessage(msg.chat.id, action)
     end
-	if msg.text:match("^[!/]serverinfo$") then
-		local matches = { string.match(msg.text, "^[!/]serverinfo$") }
+	if msg.text:match("^serverinfo$") or msg.text:match("^/serverinfo$") then
+		local matches = { string.match(msg.text, "^serverinfo$") }
 			local action = io.popen("sh ./cmd.sh"):read('*a')  
       sendMessage(msg.chat.id, action)
     end
-    if msg.text:match("^[!/]cd (.*)$") then
-			local matches = { string.match(msg.text, "^[!/]cd (.*)$") }
-			currect_folder = matches[1]
-			sendMessage(msg.chat.id, "Currect folder = "..BASE_FOLDER..currect_folder)
+    if msg.text:match("^/cd (.*)$") then
+			local matches = { string.match(msg.text, "^/cd (.*)$") }
+			currect_folder = '/'..matches[1]
+			local tester = io.popen('ls "'..BASE_FOLDER..'"'):read("*all")
+			print(tester)
+			if not tester:find(matches[1]) then
+			currect_folder = ''
+			local key = {}
+			key.inline_keyboard = {{{text = 'Create folder',callback_data = 'mkdir '..matches[1]}}}
+			sendMessage(msg.chat.id, '*I cant Find this Folder \ndo you want create it new😏*', true, false, true,key)
+			else
+			sendMessage(msg.chat.id, "*Currect folder* _=_ `"..BASE_FOLDER..currect_folder.."`")
+			end
     end
-    if msg.text:match("^[!/]mkdir (.*)$") then
-      local matches = { string.match(msg.text, "^[!/]mkdir (.*)$") }
+
+    if msg.text:match("^/mkdir (.*)$") then
+      local matches = { string.match(msg.text, "^/mkdir (.*)$") }
 			local action = io.popen('cd "'..BASE_FOLDER..currect_folder..'" && mkdir \''..matches[1]..'\''):read("*all")
-			sendMessage(msg.chat.id, "Created folder ")
+			local key = {}
+			key.inline_keyboard = {{{text = 'Go to createed dir',callback_data = 'cd '..matches[1]}}}
+			sendMessage(msg.chat.id, "*Created folder\ndo you want go to this folder??*", true, false, true,key)
     end
-		if msg.text:match("^[!/]rm (.*)$") then
-			local matches = { string.match(msg.text, "^[!/]rm (.*)$") }
+		if msg.text:match("^/rm (.*)$") then
+			local matches = { string.match(msg.text, "^/rm (.*)$") }
 			local action = io.popen('cd "'..BASE_FOLDER..currect_folder..'" && rm -f \''..matches[1]..'\''):read("*all")
-			sendMessage(msg.chat.id, "Deleted "..matches[1])
+			sendMessage(msg.chat.id, "*Deleted* `"..matches[1].."`")
 		end
-		if msg.text:match("^[!/]cat (.*)$") then
-			local matches = { string.match(msg.text, "^[!/]cat (.*)$") }
+		if msg.text:match("^/cat (.*)$") then
+			local matches = { string.match(msg.text, "^/cat (.*)$") }
 			local action = io.popen('cd "'..BASE_FOLDER..currect_folder..'" && cat \''..matches[1]..'\''):read("*all")
 			sendMessage(msg.chat.id, action)
 		end
-		if msg.text:match("^[!/]rmdir (.*)$") then
-			local matches = { string.match(msg.text, "^[!/]rmdir (.*)$") }
+		if msg.text:match("^/rmdir (.*)$") then
+			local matches = { string.match(msg.text, "^/rmdir (.*)$") }
 			local action = io.popen('cd "'..BASE_FOLDER..currect_folder..'" && rmdir \''..matches[1]..'\''):read("*all")
-			sendMessage(msg.chat.id, "Deleted "..matches[1])
+			sendMessage(msg.chat.id, "*Deleted* `"..matches[1].."`")
 		end
-		if msg.text:match("^[!/]touch (.*)$") then
-			local matches = { string.match(msg.text, "^[!/]touch (.*)$") }
+		if msg.text:match("^/touch (.*)$") then
+			local matches = { string.match(msg.text, "^/touch (.*)$") }
 			local action = io.popen('cd "'..BASE_FOLDER..currect_folder..'" && touch \''..matches[1]..'\''):read("*all")
-			sendMessage(msg.chat.id, "Created  file "..matches[1])
+			sendMessage(msg.chat.id, "*Created  file* `"..matches[1].."`")
 		end
-		if msg.text:match("^[!/]tofile ([^%s]+) (.*)$") then
-			local matches = { string.match(msg.text, "^[!/]tofile ([^%s]+) (.*)$") }
+		if msg.text:match("^/tofile ([^%s]+) (.*)$") then
+			local matches = { string.match(msg.text, "^/tofile ([^%s]+) (.*)$") }
 			local file = io.open(BASE_FOLDER..currect_folder..matches[1], "w")
 			file:write(matches[2])
 			file:flush()
 			file:close()
-			sendMessage(msg.chat.id, "Done !")
+			sendMessage(msg.chat.id, "*Done!*")
 		end
-		if msg.text:match("^[!/]shell (.*)$") then
-			local matches = { string.match(msg.text, "^[!/]shell (.*)$") }
+		if msg.text:match("^/shell (.*)$") then
+			local matches = { string.match(msg.text, "^/shell (.*)$") }
 			local text = io.popen('cd "'..BASE_FOLDER..currect_folder..'" && '..matches[1]:gsub('—', '--')):read('*all')
 			sendMessage(msg.chat.id, text)
 		end
-		if msg.text:match("^[!/]cp (.*) (.*)$") then
-			local matches = { string.match(msg.text, "^[!/]cp (.*) (.*)$") }
+		if msg.text:match("^/cp (.*) (.*)$") then
+			local matches = { string.match(msg.text, "^/cp (.*) (.*)$") }
 			local action = io.popen('cd "'..BASE_FOLDER..currect_folder..'" && cp -r \''..matches[1]..'\' \''..matches[2]..'\''):read("*all")
-			sendMessage(msg.chat.id, "Copied file "..matches[1])
+			sendMessage(msg.chat.id, "*Copied file* `"..matches[1].."`")
 		end
-		if msg.text:match("^[!/]mv (.*) (.*)$") then
-			local matches = { string.match(msg.text, "^[!/]mv (.*) (.*)$") }
+		if msg.text:match("^/mv (.*) (.*)$") then
+			local matches = { string.match(msg.text, "^/mv (.*) (.*)$") }
 			local action = io.popen('cd "'..BASE_FOLDER..currect_folder..'" && mv \''..matches[1]..'\' \''..matches[2]..'\''):read("*all")
-			sendMessage(msg.chat.id, "Moved file "..matches[1])
+			sendMessage(msg.chat.id, "*Moved file* `"..matches[1].."`")
 		end
-		if msg.text:match("^[!/]upload (.*)$") then
-			local matches = { string.match(msg.text, "^[!/]upload (.*)$") }
+		if msg.text:match("^/upload (.*)$") then
+			local matches = { string.match(msg.text, "^/upload (.*)$") }
 			if io.popen('find '..BASE_FOLDER..currect_folder..matches[1]):read("*all") == '' then
-				sendMessage(msg.chat.id, "File does not exist")
+				sendMessage(msg.chat.id, "*File does not exist*")
 			else
-				sendMessage(msg.chat.id, "Uploading file "..matches[1])
+				sendMessage(msg.chat.id, "*Uploading file* `"..matches[1].."`")
 				sendDocument(msg.chat.id, matches[1])
 			end
 		end
-		if msg.text:match("^[!/]start") then
-			local text = "Welcome Youre Bot\nTo display help Enter the following command : \n/help"
-             sendMessage(msg.chat.id, text, true, false, true)
-             end	
-            if msg.text:match("^[!/]help") then
-			local text = [[Commands :
-
-/reboot
-Reboot youre server
+		if msg.text:match("^/start") or msg.text:match("^start") then
+    local matches = { string.match(msg.text, "^start$") }
+      local text = "*Welcome Youre Bot*"
+      local key = {}
+     key.inline_keyboard = {{{text = '\nShow command : help', callback_data = 'تست'}}}
+	 sendMessage(msg.chat.id, text, true, false, true, key)
+	 ------------------------------------------------------------------------
+      local key = {}
+      key.keyboard = {{{text = 'ls'},{text = 'cd'}},{{text = 'git pull'},{text = 'serverinfo'}},{{text = 'reboot'},{text = 'help'}},{{text = 'dlt'},{text = 'start'}}}
+             sendMessage(msg.chat.id, text, true, false, true, key)
+             end
+	 -------------------------------------------------------------------------
+            if msg.text:match("^help") or msg.text:match("^/help") then
+			local matches = { string.match(msg.text, "^help$") }
+			local text = [[*Commands* _:_
 
 /git pull
-Youre bot update
+`Youre bot update`
+
+/start
+`Youre bot started`
 
 /serverinfo
-Specifications youre server
+`Specifications youre server`
 
 /cd [folder]
-Open folder
+`Open folder`
 
 /ls
-List folders
+`List folders`
 
 /mkdir [folder name]
-Create a folder with name chosen
+`Create a folder with name chosen`
 
 /rmdir [folder name]
-Remove the folder chosen
+`Remove the folder chosen`
 
 /rm [file name]
-Remove file
+`Remove file`
 
 /touch [file name]
-Create a file with name chosen
+`Create a file with name chosen`
 
 /cat [file name]
-Print the content
+`Print the content`
 
 /tofile [file name] [text]
-Will create a file with name [file name] and will put [text] in it
+`Will create a file with name [file name] and will put [text] in it`
 
 /shell [command]
-Allow use the [command] on terminal
+`Allow use the [command] on terminal`
 
 /cp [file] [dir]
-Copie [file] to folder [dir]
+`Copie [file] to folder [dir]`
 
 /mv [file] [dir]
-Move [file] to folder [dir]
+`Move [file] to folder [dir]`
 
 /upload [file name]
-Will upload that file in current folder
+`Will upload that file in current folder`
 
 /download
-will download that file you replied to
-Bot will select a name automatically
+`will download that file you replied to`
+`Bot will select a name automatically`
 
 /download [file name]
-Bot will save file with [file name]
-Bot can upload files up to 50 mg and download files up to 20 mg
+`Bot will save file with [file name]`
+`Bot can upload files up to 50 mg and download files up to 20 mg`
 
-**You can use "!" or "/" to begin all commands**
+`You can use "!" or "/" to begin all commands`
 ]]
-           sendMessage(msg.chat.id, text, true, false, true)
-         end					
-		if msg.text:match("^[!/]download (.*)$") or msg.text:match("^[!/]download$") then
+			sendMessage(msg.chat.id, text, true, false, true)
+         end
+		if msg.text:match("^download (.*)$") or msg.text:match("^[!/]download$") then
 			if not msg.reply_to_message then
-				sendMessage(msg.chat.id, "Reply to something !")
+				sendMessage(msg.chat.id, "*Reply to something!*")
 				return
 			end
 			local file = ""
@@ -301,24 +427,44 @@ Bot can upload files up to 50 mg and download files up to 20 mg
 			local url = BASE_URL .. '/getFile?file_id='..file
 			local res = HTTPS.request(url)
 			local jres = JSON.decode(res)
-			if string.match(msg.text, "^[!/]download (.*)$") then
+			if string.match(msg.text, "^download (.*)$") then
 				local matches = { string.match(msg.text, "^[!/]download (.*)$") }
 				filename = matches[1]
 			end
-
 			local download = download_to_file("https://api.telegram.org/file/bot"..bot_api_key.."/"..jres.result.file_path, filename)
-			sendMessage(msg.chat.id, "file downloaded")
+			sendMessage(msg.chat.id, "*file downloaded*")
 		end
 	end
 	return
 end
+function on_callback(msg) 
+if not msg.data then return nil end
+if string.match(msg.data, "^cd (.*)$") then
+			local matches = { string.match(msg.data, "^cd (.*)$") }
+			currect_folder = '/'..matches[1]
+			local tester = io.popen('ls "'..BASE_FOLDER..currect_folder..'"'):read("*all")
+			if not tester:find(matches[1]) then
+			currect_folder = '/'
+			 local key = {}
+			key.inline_keyboard = {{{text = 'Create folder',callback_data = 'mkdir '..matches[1]}}}
+			local text =  '*I cant Find this Folder..!! do you want create it new*'
+			else
+			text =  "*Currect folder*"
+			end
+			editMessageText(mode, msg.message.message_id, msg.message.chat.id, text, key, true)
+       end
+	end
 bot_run() 
-while is_running do 
+while true do 
 	local response = getUpdates(last_update+1) 
 	if response then
 		for i,v in ipairs(response.result) do
-			last_update = v.update_id
+		if v.message then
 			msg_processor(v.message)
+		elseif v.callback_query then
+		on_callback(v.callback_query )
+		end
+		last_update = v.update_id
 		end
 	else
 		print("Conection failed")

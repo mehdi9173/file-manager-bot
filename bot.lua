@@ -5,8 +5,8 @@ URL = require('socket.url')
 JSON = require('dkjson')
 HTTPS = require('ssl.https')
 clr = require 'term.colors'
-sudo_users = {} --------------Youre id
-local bot_api_key = "" --------------Youre bot token
+sudo_users = {@if_i_was_good} --------------Youre id
+local bot_api_key = "338327518:AAHWO6Pk6KeAWwEoFy8NJ7jLjk-kKCoVErY" --------------Youre bot token
 local BASE_URL = "https://api.telegram.org/bot"..bot_api_key
 local BASE_FOLDER = ".."
 function is_sudo(msg)

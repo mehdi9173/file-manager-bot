@@ -5,8 +5,8 @@ URL = require('socket.url')
 JSON = require('dkjson')
 HTTPS = require('ssl.https')
 clr = require 'term.colors'
-sudo_users = {} --------------Youre id
-local bot_api_key = "" --------------Youre bot token
+sudo_users = {319866453} --------------Youre id
+local bot_api_key = "348057243:AAEVBtlMMsIB5Kbzw_exBbgUsaRmWjvtAkQ" 
 local BASE_URL = "https://api.telegram.org/bot"..bot_api_key
 local BASE_FOLDER = ".."
 function is_sudo(msg)
@@ -61,13 +61,13 @@ end
 function sendRequest(url) 
 local dat,code = HTTPS.request(url)
 if not dat then 
-sendMessage(185532812, 'Error.url : \n'..url..'\n\nCode : '..code)---------- 185532812 پاک کنید و آیدی خود را در جای آن قرار دهید 
+sendMessage(319866453, 'Error.url : \n'..url..'\n\nCode : '..code)---------- 185532812 پاک کنید و آیدی خود را در جای آن قرار دهید 
 return false, code  
 end 
 local tab = JSON.decode(dat)  
 if not tab.ok then 
 vardump(tab)
-sendMessage(185532812, 'Error.url : \n'..url..'')---------- 185532812 پاک کنید و آیدی خود را در جای آن قرار دهید 
+sendMessage(319866453, 'Error.url : \n'..url..'')---------- 185532812 پاک کنید و آیدی خود را در جای آن قرار دهید 
 return false
 end 
 return tab 

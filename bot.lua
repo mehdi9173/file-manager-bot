@@ -6,7 +6,7 @@ JSON = require('dkjson')
 HTTPS = require('ssl.https')
 clr = require 'term.colors'
 sudo_users = {319866453} --------------Youre id
-local bot_api_key = "348057243:AAEVBtlMMsIB5Kbzw_exBbgUsaRmWjvtAkQ" 
+local bot_api_key = "335769877:AAHp4FCg_sA_urFWxLX_lQveZ7OJWF3tba8" 
 local BASE_URL = "https://api.telegram.org/bot"..bot_api_key
 local BASE_FOLDER = ".."
 function is_sudo(msg)
